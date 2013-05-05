@@ -77,5 +77,43 @@
                        (-> zipper zip/next helper)))]
        (-> form zip/seq-zip helper zip/root))))
 
+;; exercise #4
 ;; when wanted replace handle-mult with this new version - works as expected.
 (def new-handle-mult (fn [z] (-> z zip/down (zip/replace '-) zip/up)))
+
+;; exercise #5
+(def test-midje 
+  '(fact "Metaconstants print as their name"
+         (let [mc (Metaconstant. '...name... {})]
+           (str mc) => "...name..."
+           (pr-str mc) => "...name...")))
+
+(def transform 
+  (fn [s]
+    (letfn [(at? [z o] (= (zip/node z) o))
+            (advancing [form]
+              (-> (form) zip/next do-node))
+            (do-node [z] z
+              (cond (zip/end? z) 
+                    z
+                    
+                    (at? z 'fact)
+                    (advancing (fn [] (zip/replace z 'do)))
+
+                    (at? z '=>)
+                    (advancing 
+                     (fn []
+                       (let [replacement (list 'expect
+                                               (-> z zip/left zip/node)
+                                               (-> z zip/node)
+                                               (-> z zip/right zip/node))]
+                         (-> z 
+                             zip/left (zip/replace replacement)
+                             zip/right zip/remove
+                             zip/next zip/remove)
+                         )))
+
+                    :else (advancing (constantly z))
+                    )
+              )]
+      (-> s zip/seq-zip do-node zip/root))))
