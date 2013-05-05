@@ -70,10 +70,12 @@
                              fun (get op-fn-map 
                                      (-> zipper zip/down zip/node) 
                                      identity)]
+
                          (advancing (fn [] (fun zipper))))
                                                     
                        :else 
                        (-> zipper zip/next helper)))]
        (-> form zip/seq-zip helper zip/root))))
 
-
+;; when wanted replace handle-mult with this new version - works as expected.
+(def new-handle-mult (fn [z] (-> z zip/down (zip/replace '-) zip/up)))
