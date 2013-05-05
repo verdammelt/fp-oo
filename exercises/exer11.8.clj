@@ -117,3 +117,11 @@
                     )
               )]
       (-> s zip/seq-zip do-node zip/root))))
+
+;; exercise 6
+(def skip-to-rightmost-leaf
+  (fn [z]
+    (cond (zip/end? (zip/next z)) z
+          :else (skip-to-rightmost-leaf (zip/next z)))))
+;; why can't it be this easy!?
+
