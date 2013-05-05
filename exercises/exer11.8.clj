@@ -57,7 +57,8 @@
                       (zip/insert-right (-> z zip/down zip/right zip/right zip/node)))))
 (def tumult
      (fn [form]
-       (letfn [(helper [zipper]
+       (letfn [(advancing [form] (-> (form) zip/next helper))
+               (helper [zipper]
                  (cond (zip/end? zipper)
                        zipper
                        
@@ -66,10 +67,10 @@
                                         '- handle-minus,
                                         '* handle-mult,
                                         '/ handle-div}
-                             fn (get op-fn-map 
+                             fun (get op-fn-map 
                                      (-> zipper zip/down zip/node) 
                                      identity)]
-                         (-> zipper fn zip/next helper))
+                         (advancing (fn [] (fun zipper))))
                                                     
                        :else 
                        (-> zipper zip/next helper)))]
