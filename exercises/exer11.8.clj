@@ -129,5 +129,36 @@
                zip/down
                skip-to-rightmost-leaf)))))
 
+;; exercise 7
+(def new-transform 
+  (fn [s]
+    (letfn [(at? [z o] (= (zip/node z) o))
+            (advancing [form]
+              (-> (form) zip/next do-node))
+            (do-node [z] z
+              (cond (zip/end? z) 
+                    z
+                    
+                    (at? z 'fact)
+                    (advancing (fn [] (zip/replace z 'do)))
 
+                    (at? z 'quote)
+                    (advancing (fn [] (-> z skip-to-rightmost-leaf)))
 
+                    (at? z '=>)
+                    (advancing 
+                     (fn []
+                       (let [replacement (list 'expect
+                                               (-> z zip/left zip/node)
+                                               (-> z zip/node)
+                                               (-> z zip/right zip/node))]
+                         (-> z 
+                             zip/left (zip/replace replacement)
+                             zip/right zip/remove
+                             zip/next zip/remove)
+                         )))
+
+                    :else (advancing (constantly z))
+                    )
+              )]
+      (-> s zip/seq-zip do-node zip/root))))
