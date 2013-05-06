@@ -11,7 +11,7 @@
   (fn [zip] 
     (let [parents (:parents zip)]
       (if (empty? parents) (znode zip)
-          (znode (last (:parents zip)))))))
+          (zroot (zup zip))))))
 
 (def znode 
   (fn [zip] (:here zip)))
@@ -20,14 +20,28 @@
   (fn [zip] 
     (let [here (first (:here zip))]
       (and here 
-           (merge zip 
-                  {:here here 
-                   :parents (conj (:parents zip) zip) 
-                   :rights (map zseq (rest (:here zip)))
-                   })))))
+           (let [new-parents (conj (:parents zip) zip)]
+             (merge zip 
+                    {:here here 
+                     :parents new-parents 
+                     :rights (map 
+                              (fn [s] (merge zip {:here s :parents new-parents})) 
+                            (rest (:here zip)))
+                     :lefts '()
+                   }))))))
 
 (def zup 
-  (fn [zip] (first (:parents zip))))
+  (fn [zip] 
+    (let [parent (first (:parents zip))]
+      (and parent
+           (if (:changed zip)
+             (merge parent
+                    {:here (concat (reverse 
+                                    (map znode (:lefts zip))) 
+                                   (list (znode zip)) 
+                                   (map znode (:rights zip)))
+                     :changed (:changed zip)})
+             parent)))))
 
 (def zright
   (fn [zip] 
@@ -35,7 +49,8 @@
       (and right 
            (merge right
                   {:rights (rest (:rights zip))
-                   :lefts (conj (:lefts zip) zip)})))))
+                   :lefts (conj (:lefts zip) zip)
+                   :changed (:changed zip)})))))
 
 (def zleft
   (fn [zip] 
@@ -43,11 +58,13 @@
       (and left 
            (merge left
                   {:rights (conj (:rights zip) zip)
-                   :lefts (rest (:lefts zip))})))))
+                   :lefts (rest (:lefts zip))
+                   :changed (:changed zip)})))))
 
 (def zreplace
   (fn [zip new] 
-    (merge zip {:here new})))
+    (merge zip {:here new
+                :changed true})))
 
 (assert (= (-> '(a b c) zseq znode) '(a b c)))
 (assert (= (-> '(a b c) zseq zdown znode) 'a))
@@ -68,3 +85,9 @@
 (assert (= (-> (zseq '(a b c)) zdown zright (zreplace 3) znode) 3))
 (assert (= (-> (zseq '(a b c)) zdown zright (zreplace 3) zright zleft znode) 3))
 (assert (= (-> (zseq '(a b c)) zdown zright (zreplace 3) zleft zright zright znode) 'c))
+
+(assert (= (-> (zseq '(a b c)) zdown zright (zreplace 3) zup znode) '(a 3 c)))
+(assert (= (-> (zseq '(a b c)) zdown zright (zreplace 3) zright (zreplace 4) zup znode) '(a 3 4)))
+(assert (= (-> (zseq '(a)) zdown (zreplace 3) zup zup) nil))
+(assert (= (-> (zseq '(a (b) c)) zdown zright zdown (zreplace 3) zroot) '(a (3) c)))
+(assert (= (-> (zseq '(a (b) c)) zdown zright zdown (zreplace 3) zup zright (zreplace 4) zroot) '(a (3) 4)))
