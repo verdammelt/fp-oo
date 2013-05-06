@@ -130,7 +130,7 @@
                skip-to-rightmost-leaf)))))
 
 ;; exercise 7
-(def new-transform 
+(def tranform-7
   (fn [s]
     (letfn [(at? [z o] (= (zip/node z) o))
             (advancing [form]
@@ -144,6 +144,58 @@
 
                     (at? z 'quote)
                     (advancing (fn [] (-> z skip-to-rightmost-leaf)))
+
+                    (at? z '=>)
+                    (advancing 
+                     (fn []
+                       (let [replacement (list 'expect
+                                               (-> z zip/left zip/node)
+                                               (-> z zip/node)
+                                               (-> z zip/right zip/node))]
+                         (-> z 
+                             zip/left (zip/replace replacement)
+                             zip/right zip/remove
+                             zip/next zip/remove)
+                         )))
+
+                    :else (advancing (constantly z))
+                    )
+              )]
+      (-> s zip/seq-zip do-node zip/root))))
+
+;; exercise 8
+(def transform-8
+  (fn [s]
+    (letfn [(at? [z o] (= (zip/node z) o))
+            (above? [z o] (and (zip/branch? z)
+                               (at? (zip/down z) o)))
+            (advancing [form]
+              (-> (form) zip/next do-node))
+            (do-node [z] z
+              (cond (zip/end? z) 
+                    z
+                    
+                    (at? z 'fact)
+                    (advancing (fn [] (zip/replace z 'do)))
+
+                    (at? z 'quote)
+                    (advancing (fn [] (-> z skip-to-rightmost-leaf)))
+
+                    (above? z 'provided)
+                    (advancing 
+                     (fn [] 
+                       (let [replacement (list 'fake
+                                               (-> z zip/down zip/right zip/node)
+                                               (-> z zip/down zip/right zip/right zip/node)
+                                               (-> z zip/down zip/right zip/right zip/right zip/node))]
+
+                         (-> z 
+                             zip/left
+                             (zip/append-child replacement)
+                             zip/right
+                             zip/remove
+                             )
+                         )))
 
                     (at? z '=>)
                     (advancing 
