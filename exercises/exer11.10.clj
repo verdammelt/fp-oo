@@ -45,6 +45,10 @@
                   {:rights (conj (:rights zip) zip)
                    :lefts (rest (:lefts zip))})))))
 
+(def zreplace
+  (fn [zip new] 
+    (merge zip {:here new})))
+
 (assert (= (-> '(a b c) zseq znode) '(a b c)))
 (assert (= (-> '(a b c) zseq zdown znode) 'a))
 (assert (= (-> '(a b c) zseq zup) nil))
@@ -60,3 +64,7 @@
 (assert (= (-> '(a b c) zseq zdown zleft) nil)) 
 (assert (= (-> '(a b c) zseq zdown zright zright zright) nil)) 
 (assert (= (-> '(a b c) zseq zdown zup znode) '(a b c))) 
+
+(assert (= (-> (zseq '(a b c)) zdown zright (zreplace 3) znode) 3))
+(assert (= (-> (zseq '(a b c)) zdown zright (zreplace 3) zright zleft znode) 3))
+(assert (= (-> (zseq '(a b c)) zdown zright (zreplace 3) zleft zright zright znode) 'c))
