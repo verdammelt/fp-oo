@@ -3,7 +3,9 @@
 (def zseq
   (fn [tree]
     {:here tree
-     :parents '()}))
+     :parents '()
+     :lefts '()
+     :rights '()}))
 
 (def zroot 
   (fn [zip] 
@@ -18,10 +20,30 @@
   (fn [zip] 
     (let [here (first (:here zip))]
       (and here 
-           (merge zip {:here here :parents (conj (:parents zip) zip)})))))
+           (merge zip 
+                  {:here here 
+                   :parents (conj (:parents zip) zip) 
+                   :rights (map zseq (rest (:here zip)))
+                   })))))
 
 (def zup 
   (fn [zip] (first (:parents zip))))
+
+(def zright
+  (fn [zip] 
+    (let [right (first (:rights zip))]
+      (and right 
+           (merge right
+                  {:rights (rest (:rights zip))
+                   :lefts (conj (:lefts zip) zip)})))))
+
+(def zleft
+  (fn [zip] 
+    (let [left (first (:lefts zip))]
+      (and left 
+           (merge left
+                  {:rights (conj (:rights zip) zip)
+                   :lefts (rest (:lefts zip))})))))
 
 (assert (= (-> '(a b c) zseq znode) '(a b c)))
 (assert (= (-> '(a b c) zseq zdown znode) 'a))
@@ -33,3 +55,8 @@
 (assert (= (-> '(a) zseq zroot) '(a)))
 (assert (= (-> '(((a)) b c) zseq zdown zdown zdown zroot) '(((a)) b c))) 
 
+(assert (= (-> '(a b c) zseq zdown zright znode) 'b))
+(assert (= (-> '(a b c) zseq zdown zright zright zleft znode) 'b)) 
+(assert (= (-> '(a b c) zseq zdown zleft) nil)) 
+(assert (= (-> '(a b c) zseq zdown zright zright zright) nil)) 
+(assert (= (-> '(a b c) zseq zdown zup znode) '(a b c))) 
