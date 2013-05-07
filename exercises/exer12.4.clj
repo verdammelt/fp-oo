@@ -30,3 +30,14 @@
 
                  :else
                  (myfilter p (rest ls)))))))
+
+;; exercise 3
+(def eager-filter
+  (fn [p ls]
+    (cond (empty? ls) '()
+          
+          (p (first ls))
+          (cons (first ls) (eager-filter p (rest ls)))
+          
+          :else
+          (eager-filter p (rest ls)))))
