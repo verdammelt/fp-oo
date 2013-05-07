@@ -3,6 +3,7 @@
 (def zseq
   (fn [tree]
     {:here tree
+     :end false
      :parents '()
      :lefts '()
      :rights '()}))
@@ -11,14 +12,29 @@
   (fn [zip]
     (seq? (:here zip))))
 
+(def zend? (fn [zip] (:end zip)))
+
+(def znode 
+  (fn [zip] (:here zip)))
+
+(def zup 
+  (fn [zip] 
+    (let [parent (first (:parents zip))]
+      (and parent
+           (if (:changed zip)
+             (merge parent
+                    {:here (concat (reverse 
+                                    (map znode (:lefts zip))) 
+                                   (list (znode zip)) 
+                                   (map znode (:rights zip)))
+                     :changed (:changed zip)})
+             parent)))))
+
 (def zroot 
   (fn [zip] 
     (let [parents (:parents zip)]
       (if (empty? parents) (znode zip)
           (zroot (zup zip))))))
-
-(def znode 
-  (fn [zip] (:here zip)))
 
 (def zdown 
   (fn [zip] 
@@ -34,18 +50,7 @@
                      :lefts '()
                    }))))))
 
-(def zup 
-  (fn [zip] 
-    (let [parent (first (:parents zip))]
-      (and parent
-           (if (:changed zip)
-             (merge parent
-                    {:here (concat (reverse 
-                                    (map znode (:lefts zip))) 
-                                   (list (znode zip)) 
-                                   (map znode (:rights zip)))
-                     :changed (:changed zip)})
-             parent)))))
+
 
 (def zright
   (fn [zip] 
@@ -74,10 +79,18 @@
      (empty? (:rights zip))
      (letfn [(up [z] 
                (let [up-node (zup z)]
-                 (if (empty? (:rights up-node))
-                   (up up-node)
-                   up-node)))]
-       (-> zip up zright))
+                 (cond 
+                  (nil? up-node)
+                  (merge z {:end true})
+
+                  (empty? (:rights up-node))
+                  (up up-node)
+
+                  :else
+                  up-node)))]
+       (let [upped (-> zip up)]
+         (if (:end upped) upped
+             (zright upped))))
      
      :else 
      (zright zip))))
@@ -119,3 +132,9 @@
 (assert (= (-> (zseq '(() b)) znext znext znode) 'b))
 (assert (= (-> (zseq '((a) b)) zdown zdown znext znode) 'b))
 (assert (= (-> (zseq '(((a)) b)) zdown zdown zdown znext znode) 'b))
+
+(assert (= (-> (zseq '()) zend?) false))
+(assert (= (-> (zseq '()) znext zend?) true))
+(def zipper (-> (zseq '(a)) znext (zreplace 5) znext))
+(assert (= (zend? zipper) true))
+(assert (= (zroot zipper) '(5)))
