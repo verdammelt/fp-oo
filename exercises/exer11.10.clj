@@ -67,13 +67,20 @@
 
 (def znext
   (fn [zip] 
-    (cond (and (zbranch? zip)
-               (not (empty? (:here zip))))
-          (zdown zip)
-          
-          :else 
-          (zright zip))
-    ))
+    (cond 
+     (and (zbranch? zip) (not (empty? (:here zip))))
+     (zdown zip)
+
+     (empty? (:rights zip))
+     (letfn [(up [z] 
+               (let [up-node (zup z)]
+                 (if (empty? (:rights up-node))
+                   (up up-node)
+                   up-node)))]
+       (-> zip up zright))
+     
+     :else 
+     (zright zip))))
 
 (def zreplace
   (fn [zip new] 
@@ -110,5 +117,5 @@
 (assert (= (-> (zseq '(a ((b)))) zdown znext znode) '((b))))
 (assert (= (-> (zseq '(a b)) znext znode) 'a))
 (assert (= (-> (zseq '(() b)) znext znext znode) 'b))
-;; (assert (= (-> (zseq '((a) b)) zdown zdown znext znode) 'b))
-;; (assert (= (-> (zseq '(((a)) b)) zdown zdown zdown znext znode) 'b))
+(assert (= (-> (zseq '((a) b)) zdown zdown znext znode) 'b))
+(assert (= (-> (zseq '(((a)) b)) zdown zdown zdown znext znode) 'b))
