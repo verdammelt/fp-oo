@@ -14,8 +14,7 @@
 
 (def zend? (fn [zip] (:end zip)))
 
-(def znode 
-  (fn [zip] (:here zip)))
+(def znode (fn [zip] (:here zip)))
 
 (def zup 
   (fn [zip] 
@@ -77,20 +76,20 @@
      (zdown zip)
 
      (empty? (:rights zip))
-     (letfn [(up [z] 
+     (letfn [(try-up [z] 
                (let [up-node (zup z)]
                  (cond 
                   (nil? up-node)
                   (merge z {:end true})
 
                   (empty? (:rights up-node))
-                  (up up-node)
+                  (try-up up-node)
 
                   :else
                   up-node)))]
-       (let [upped (-> zip up)]
-         (if (:end upped) upped
-             (zright upped))))
+       (let [up (-> zip try-up)]
+         (if (:end up) up
+             (zright up))))
      
      :else 
      (zright zip))))
