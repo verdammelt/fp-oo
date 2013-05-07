@@ -7,6 +7,10 @@
      :lefts '()
      :rights '()}))
 
+(def zbranch?
+  (fn [zip]
+    (seq? (:here zip))))
+
 (def zroot 
   (fn [zip] 
     (let [parents (:parents zip)]
@@ -61,6 +65,16 @@
                    :lefts (rest (:lefts zip))
                    :changed (:changed zip)})))))
 
+(def znext
+  (fn [zip] 
+    (cond (and (zbranch? zip)
+               (not (empty? (:here zip))))
+          (zdown zip)
+          
+          :else 
+          (zright zip))
+    ))
+
 (def zreplace
   (fn [zip new] 
     (merge zip {:here new
@@ -91,3 +105,10 @@
 (assert (= (-> (zseq '(a)) zdown (zreplace 3) zup zup) nil))
 (assert (= (-> (zseq '(a (b) c)) zdown zright zdown (zreplace 3) zroot) '(a (3) c)))
 (assert (= (-> (zseq '(a (b) c)) zdown zright zdown (zreplace 3) zup zright (zreplace 4) zroot) '(a (3) 4)))
+
+(assert (= (-> (zseq '(a b)) zdown znext znode) 'b))
+(assert (= (-> (zseq '(a ((b)))) zdown znext znode) '((b))))
+(assert (= (-> (zseq '(a b)) znext znode) 'a))
+(assert (= (-> (zseq '(() b)) znext znext znode) 'b))
+;; (assert (= (-> (zseq '((a) b)) zdown zdown znext znode) 'b))
+;; (assert (= (-> (zseq '(((a)) b)) zdown zdown zdown znext znode) 'b))
