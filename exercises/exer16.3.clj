@@ -122,4 +122,3 @@
 (println "-----------")
 (println "Running new run-and-charge.")
 (run-and-charge-and-speak 3)
-
