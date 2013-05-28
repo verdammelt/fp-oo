@@ -161,3 +161,21 @@
   }
  })
 
+;; exercise #2
+;; what should the superclass of MetaAnything be?
+;; IMHO: Anything
+(def MetaAnything (assoc MetaAnything :__superclass_symbol__ 'Anything))
+
+; example:
+;(send-to Point :to-string)
+
+;; exercise 3
+;; what should MetaPoint's class be?
+;; what should MetaAnything's clas be?
+(def MetaPoint (assoc MetaPoint :__class_symbol__ 'Anything))
+(def MetaAnything (assoc MetaAnything :__class_symbol__ 'Anything))
+
+; example:
+(send-to MetaPoint :class)
+(send-to MetaPoint :to-string)
+
