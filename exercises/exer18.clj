@@ -101,6 +101,8 @@
                        :to-string (fn [this] (str this))
                        :class-name :__class_symbol__    
                        :class (fn [this] (class-from-instance this))
+                       :ancestors (fn [this]
+                                    (ancestors (:__own_symbol__ this)))
                        }))
                             
 (install (basic-class 'MetaAnything,
@@ -181,3 +183,16 @@
 
 ;; exercise #1
 ;; implement a :to-string for classes
+;; added it to Klass and it works great!
+
+;; exercise #2
+;; add a :ancestors method to get a list of non-meta classes
+;; above-and-including the the provided class
+(defn ancestors [class-symbol]
+  (letfn [(helper 
+            [class-symbol so-far]
+            (if (nil? class-symbol)
+              so-far
+              (helper (class-symbol-above class-symbol)
+                      (cons class-symbol so-far))))]
+    (reverse (helper class-symbol []))))
