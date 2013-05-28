@@ -104,8 +104,8 @@
                                                    (send-to this :class-name)
                                                    message))))
                        :to-string (fn [this] (str this))
-                       :class-name :__class_symbol__    
-                       :class (fn [this] (class-from-instance this))
+                       :class-name (fn [this] (first (ancestors (:__class_symbol__ this))))
+                       :class (fn [this] (eval (send-to this :class-name)))
                        :ancestors (fn [this]
                                     (ancestors (:__own_symbol__ this)))
                        }))
