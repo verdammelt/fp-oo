@@ -10,7 +10,7 @@
        {:__class_symbol__ class-symbol}))
 
 (def basic-class
-     (fn [my-name
+  (fn [my-name
           _left left-symbol
           _up up-symbol
           instance-methods]
@@ -20,6 +20,11 @@
               :__own_symbol__ my-name
               :__superclass_symbol__ up-symbol
               :__instance_methods__ instance-methods)))
+
+(defn basic-meta-class [& args]
+  (with-meta (apply basic-class args) {:meta true}))
+
+(defn is-metaclass? [k] (:meta (meta (eval k)) false))
 
 (def install 
      (fn [class]
@@ -105,11 +110,11 @@
                                     (ancestors (:__own_symbol__ this)))
                        }))
                             
-(install (basic-class 'MetaAnything,
-                      :left 'Klass,
-                      :up 'Klass,
-                      { 
-                       }))
+(install (basic-meta-class 'MetaAnything,
+                           :left 'Klass,
+                           :up 'Klass,
+                           { 
+                            }))
 
 
 ;; Klass
@@ -124,7 +129,7 @@
                        :to-string (fn [this] (str "class " (:__own_symbol__ this)))
                       }))
                             
-(install (basic-class 'MetaKlass,
+(install (basic-meta-class 'MetaKlass,
                       :left 'Klass,
                       :up 'Klass,
                       {
@@ -134,9 +139,9 @@
                             instance-methods class-methods]
                          ;; Metaclass
                          (install
-                          (basic-class (metasymbol new-class-symbol)
-                                       :left 'Klass
-                                       :up 'Klass
+                          (basic-meta-class (metasymbol new-class-symbol)
+                                            :left 'Klass
+                                            :up 'Klass
                                        class-methods))
                          ;; Class
                          (install
@@ -191,8 +196,10 @@
 (defn ancestors [class-symbol]
   (letfn [(helper 
             [class-symbol so-far]
-            (if (nil? class-symbol)
-              so-far
-              (helper (class-symbol-above class-symbol)
-                      (cons class-symbol so-far))))]
+            (cond 
+             (nil? class-symbol) so-far
+             (is-metaclass? class-symbol) (helper (class-symbol-above class-symbol) so-far)
+             :else (helper (class-symbol-above class-symbol)
+                           (cons class-symbol so-far))))]
     (reverse (helper class-symbol []))))
+
