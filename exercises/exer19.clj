@@ -37,6 +37,10 @@
 (def invisible?
      (fn [method-holder-symbol] (:__invisible__ (eval method-holder-symbol))))
 
+(def stub
+  (fn [method-holder] (assoc method-holder :__stub__ true)))
+(def stub?
+  (fn [method-holder-symbol] (:__stub__ (eval method-holder-symbol))))
 
 ;;; Here are methods that take a method-holder-symbol or instance containing one and follow it somewhere. 
 
@@ -65,10 +69,15 @@
 
 (def lineage-1
      (fn [method-holder-symbol so-far]
-       (if (nil? method-holder-symbol)
-         so-far
-         (lineage-1 (method-holder-symbol-above method-holder-symbol)
-                    (cons method-holder-symbol so-far)))))
+       (cond (nil? method-holder-symbol) so-far
+
+             (stub? method-holder-symbol)
+             (lineage-1 (method-holder-symbol-above method-holder-symbol)
+                        (lineage-1 (:__left_symbol__ (eval method-holder-symbol)) so-far))
+             
+             :else (lineage-1 (method-holder-symbol-above method-holder-symbol)
+                               (cons method-holder-symbol so-far)))))
+
 (def lineage
      (fn [method-holder-symbol]
        (lineage-1 method-holder-symbol [])))
@@ -221,10 +230,11 @@
                                        (let [module-name (:__own_symbol__ module)
                                              stub-name (gensym module-name)]
                                          (install 
-                                          (method-holder stub-name
-                                                         :left module-name
-                                                         :up (:__up_symbol__ this)
-                                                         {}))
+                                          (stub
+                                           (method-holder stub-name
+                                                          :left module-name
+                                                          :up (:__up_symbol__ this)
+                                                          {})))
                                          (install (assoc this :__up_symbol__ stub-name))))}))
 
 (def MetaKlass (assoc MetaKlass :__up_symbol__ 'MetaModule))
