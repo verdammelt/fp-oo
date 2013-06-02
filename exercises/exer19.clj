@@ -204,9 +204,16 @@
                                :up 'Klass
                                {
                                 :new (fn [this new-class-symbol] 
+                                       (invisible
+                                        (install
+                                         (method-holder (metasymbol new-class-symbol)
+                                                        :left nil
+                                                        :up 'MetaModule
+                                                        {
+                                                         })))
                                        (install 
                                         (method-holder new-class-symbol
-                                                       :left nil
+                                                       :left (metasymbol new-class-symbol)
                                                        :up nil
                                                        {}
                                                        ))
@@ -216,11 +223,20 @@
 (def Module (method-holder 'Module 
                            :left 'MetaModule
                            :up 'Anything
-                           {}))
+                           {
+                            :include (fn [this name] 
+                                       (println 
+                                        (str "Module " 
+                                             (:__own_symbol__ name) 
+                                             " may someday be included into " 
+                                             (:__own_symbol__ this))))
+                            }))
 
+(def MetaKlass (assoc MetaKlass :__up_symbol__ 'MetaModule))
+(def Klass (assoc Klass :__up_symbol__ 'Module))
 (def Kuddlesome (send-to Module :new 'Kuddlesome))
 
-(send-to Trilobites :include Kuddlesome)
+(send-to Trilobite :include Kuddlesome)
 
 
 ;; An example module 
