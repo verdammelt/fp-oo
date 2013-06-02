@@ -204,16 +204,9 @@
                                :up 'Klass
                                {
                                 :new (fn [this new-class-symbol] 
-                                       (invisible
-                                        (install
-                                         (method-holder (metasymbol new-class-symbol)
-                                                        :left nil
-                                                        :up 'MetaModule
-                                                        {
-                                                         })))
                                        (install 
                                         (method-holder new-class-symbol
-                                                       :left (metasymbol new-class-symbol)
+                                                       :left 'MetaModule
                                                        :up nil
                                                        {}
                                                        ))
