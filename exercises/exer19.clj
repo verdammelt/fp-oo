@@ -217,24 +217,21 @@
                            :left 'MetaModule
                            :up 'Anything
                            {
-                            :include (fn [this name] 
-                                       (println 
-                                        (str "Module " 
-                                             (:__own_symbol__ name) 
-                                             " may someday be included into " 
-                                             (:__own_symbol__ this))))
-                            }))
+                            :include (fn [this module] 
+                                       (let [module-name (:__own_symbol__ module)
+                                             stub-name (gensym module-name)]
+                                         (install 
+                                          (method-holder stub-name
+                                                         :left module-name
+                                                         :up (:__up_symbol__ this)
+                                                         {}))
+                                         (install (assoc this :__up_symbol__ stub-name))))}))
 
 (def MetaKlass (assoc MetaKlass :__up_symbol__ 'MetaModule))
 (def Klass (assoc Klass :__up_symbol__ 'Module))
 
 (def Kuddlesome (send-to Module :new 'Kuddlesome
                          {:be_stroked (fn [this] "purrrrr....")}))
-
-(send-to Trilobite :include Kuddlesome)
-
-;; who will respond to (send-to Kuddlesome :include SomeOtherModule)
-
 
 
 ;; An example module 
