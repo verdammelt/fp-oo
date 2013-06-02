@@ -200,15 +200,15 @@
 
 
 (def MetaModule (method-holder 'MetaModule
-                               :left nil
+                               :left 'Klass
                                :up 'Klass
                                {
-                                :new (fn [this new-class-symbol] 
+                                :new (fn [this new-class-symbol methods] 
                                        (install 
                                         (method-holder new-class-symbol
-                                                       :left 'MetaModule
+                                                       :left 'Module
                                                        :up nil
-                                                       {}
+                                                       methods
                                                        ))
                                        )
                                 }))
@@ -227,9 +227,14 @@
 
 (def MetaKlass (assoc MetaKlass :__up_symbol__ 'MetaModule))
 (def Klass (assoc Klass :__up_symbol__ 'Module))
-(def Kuddlesome (send-to Module :new 'Kuddlesome))
+
+(def Kuddlesome (send-to Module :new 'Kuddlesome
+                         {:be_stroked (fn [this] "purrrrr....")}))
 
 (send-to Trilobite :include Kuddlesome)
+
+;; who will respond to (send-to Kuddlesome :include SomeOtherModule)
+
 
 
 ;; An example module 
