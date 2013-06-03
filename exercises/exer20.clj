@@ -341,19 +341,6 @@
          })
 
 
-(send-to Klass :new
-         'DynamicPoint 'Point
-         {
-          :shift
-          (fn [xinc yinc]
-            (println "Method" current-message "found in" holder-of-current-method)
-            (println "It has these arguments:" current-arguments))
-         }
-         {})
-
-(def point (send-to DynamicPoint :new 1 2))
-(send-to point :shift 100 200)
-
 (def throw-no-superclass-method-error
      (fn []
        (throw (Error. (str "No superclass method `" current-message
@@ -365,3 +352,16 @@
          (method-holder-symbol-above holder-of-current-method) 
          current-message)
         (throw-no-superclass-method-error))))
+
+(def send-super
+  (fn [& args]
+    (let [new-holder (next-higher-holder-or-die)] 
+      (binding [this this
+                current-message current-message
+                current-arguments args
+                holder-of-current-method new-holder]
+        (apply (current-message (held-methods holder-of-current-method)) 
+               current-arguments)))))
+
+
+
