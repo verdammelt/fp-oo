@@ -355,13 +355,10 @@
 
 (def send-super
   (fn [& args]
-    (let [new-holder (next-higher-holder-or-die)] 
-      (binding [this this
-                current-message current-message
-                current-arguments args
-                holder-of-current-method new-holder]
+    (binding [holder-of-current-method (next-higher-holder-or-die)
+                current-arguments args]
         (apply (current-message (held-methods holder-of-current-method)) 
-               current-arguments)))))
+               current-arguments))))
 
 
 
