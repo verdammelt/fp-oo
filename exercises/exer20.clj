@@ -353,3 +353,15 @@
 
 (def point (send-to DynamicPoint :new 1 2))
 (send-to point :shift 100 200)
+
+(def throw-no-superclass-method-error
+     (fn []
+       (throw (Error. (str "No superclass method `" current-message
+                           "` above `" holder-of-current-method
+                           "`.")))))
+(def next-higher-holder-or-die
+  (fn []
+    (or (find-containing-holder-symbol 
+         (method-holder-symbol-above holder-of-current-method) 
+         current-message)
+        (throw-no-superclass-method-error))))
