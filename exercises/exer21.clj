@@ -87,15 +87,12 @@
 (send-to Klass :new 
          'ActiveMessage 'Anything
          {
-          :name (fn [] (:name (:active-message this)))
-          :holder-name (fn [] (:holder-name (:active-message this)))
-          :args (fn [] (:args (:active-message this)))
-          :target (fn [] (:target (:active-message this)))
-
-          :active-message :active-message
+          :name (fn [] (:name this))
+          :holder-name (fn [] this)
+          :args (fn [] (:args this))
+          :target (fn [] (:target this))
 
           :add-instance-values (fn [& map-args] 
-                                 (assoc this 
-                                   :active-message (apply hash-map map-args)))
+                                 (merge this (apply hash-map map-args)))
           }
          {})
