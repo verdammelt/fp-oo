@@ -6,6 +6,9 @@
 ;;; Implicit variables
 
 (def ^:dynamic this nil)
+(def ^:dynamic holder-of-current-method nil)
+(def ^:dynamic current-message nil)
+(def ^:dynamic current-arguments nil)
 
 
 ;;; Functions that construct the different kinds of objects
@@ -110,7 +113,10 @@
                         (:__own_symbol__ method-holder) 
                         message)]
          (if container
-           (binding [this instance] 
+           (binding [this instance
+                     holder-of-current-method container
+                     current-message message
+                     current-arguments args] 
              (apply (message (held-methods container)) args))
            (send-to instance :method-missing message args)))))
 
@@ -335,3 +341,15 @@
          })
 
 
+(send-to Klass :new
+         'DynamicPoint 'Point
+         {
+          :shift
+          (fn [xinc yinc]
+            (println "Method" current-message "found in" holder-of-current-method)
+            (println "It has these arguments:" current-arguments))
+         }
+         {})
+
+(def point (send-to DynamicPoint :new 1 2))
+(send-to point :shift 100 200)
