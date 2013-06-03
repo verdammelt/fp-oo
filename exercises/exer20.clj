@@ -360,5 +360,11 @@
         (apply (current-message (held-methods holder-of-current-method)) 
                current-arguments))))
 
+(def repeat-to-super
+  (fn []
+    (binding [holder-of-current-method (next-higher-holder-or-die)]
+      (apply (current-message (held-methods holder-of-current-method))
+             current-arguments))))
+
 
 
