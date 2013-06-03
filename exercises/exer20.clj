@@ -61,7 +61,7 @@
 
 (def held-methods
      (fn [method-holder-symbol]
-       (assert (symbol? method-holder-symbol))
+       (assert (symbol? method-holder-symbol) )
        (:__methods__ (eval method-holder-symbol))))
 
 (def left-from-instance
@@ -99,11 +99,19 @@
                               (lineage method-holder-symbol))]
          (apply merge method-maps))))
 
+(def find-containing-holder-symbol
+  (fn [holder-symbol method]
+    (first (filter (fn [symbol] (method (held-methods symbol)))
+                   (reverse (lineage holder-symbol))))))
+
 (def apply-message-to
      (fn [method-holder instance message args]
-       (let [method (message (method-cache method-holder))]
-         (if method
-           (binding [this instance] (apply method args))
+       (let [container (find-containing-holder-symbol 
+                        (:__own_symbol__ method-holder) 
+                        message)]
+         (if container
+           (binding [this instance] 
+             (apply (message (held-methods container)) args))
            (send-to instance :method-missing message args)))))
 
 ;;; The public interface
@@ -327,10 +335,3 @@
          })
 
 
-;; exercise #1
-(def find-containing-holder-symbol
-  (fn [holder-symbol method]
-    (cond (nil? holder-symbol) nil
-          (nil? (method (:__methods__ (eval holder-symbol))))
-          (find-containing-holder-symbol (:__up_symbol__ (eval holder-symbol)) method)
-          :else holder-symbol)))
