@@ -94,13 +94,13 @@
                                  (merge this (apply hash-map map-args)))
 
           :move-up (fn []
-                     (let [symbol-above (method-holder-symbol-above (:holder-name this))
+                     (let [symbol-above (method-holder-symbol-above (send-to this :holder-name))
                            holder-name (find-containing-holder-symbol symbol-above
-                                                                      (:name this))]
+                                                                      (send-to this :name))]
                        (if holder-name
                          (assoc this :holder-name holder-name)
-                         (throw (Error. (str "No superclass method `" (:name this)
-                                             "` above `" (:holder-name this)
+                         (throw (Error. (str "No superclass method `" (send-to this :name)
+                                             "` above `" (send-to :holder-name)
                                              "`."))))))
           }
          {})
