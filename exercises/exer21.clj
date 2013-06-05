@@ -10,27 +10,27 @@
                         (message-name (held-methods holder-symbol)))
                       (reverse (lineage first-candidate))))))
 
-(def fresh-active-message
-     (fn [target name args]
-       (let [holder-name (find-containing-holder-symbol (:__left_symbol__ target)
-                                                        name)]
-             (if holder-name
-               {:name name, :holder-name holder-name, :args args, :target target}
-               (fresh-active-message target
-                                     :method-missing
-                                     (vector name args))))))
+;; (def fresh-active-message
+;;      (fn [target name args]
+;;        (let [holder-name (find-containing-holder-symbol (:__left_symbol__ target)
+;;                                                         name)]
+;;              (if holder-name
+;;                {:name name, :holder-name holder-name, :args args, :target target}
+;;                (fresh-active-message target
+;;                                      :method-missing
+;;                                      (vector name args))))))
 
 
-(def using-method-above
-     (fn [active-message]
-       (let [symbol-above (method-holder-symbol-above (:holder-name active-message))
-             holder-name (find-containing-holder-symbol symbol-above
-                                                        (:name active-message))]
-         (if holder-name
-           (assoc active-message :holder-name holder-name)
-           (throw (Error. (str "No superclass method `" (:name active-message)
-                           "` above `" (:holder-name active-message)
-                           "`.")))))))
+;; (def using-method-above
+;;      (fn [active-message]
+;;        (let [symbol-above (method-holder-symbol-above (:holder-name active-message))
+;;              holder-name (find-containing-holder-symbol symbol-above
+;;                                                         (:name active-message))]
+;;          (if holder-name
+;;            (assoc active-message :holder-name holder-name)
+;;            (throw (Error. (str "No superclass method `" (:name active-message)
+;;                            "` above `" (:holder-name active-message)
+;;                            "`.")))))))
 
 ;; Activating methods
 
@@ -55,12 +55,12 @@
 
 (def repeat-to-super
      (fn []
-       (activate-method (using-method-above *active-message*))))
+       (activate-method (send-to *active-message* :move-up))))
        
 (def send-super
      (fn [& args]
-       (let [with-replaced-args (assoc *active-message* :args args)]
-         (activate-method (using-method-above with-replaced-args)))))
+       (activate-method (assoc (send-to *active-message* :move-up)
+                           :args args))))
 
 ;; Klass
 (install (method-holder 'Klass,
@@ -82,8 +82,6 @@
                                    (reverse (lineage (:__own_symbol__ this)))))
                          }))
                             
-          
-; exercise #1
 (send-to Klass :new 
          'ActiveMessage 'Anything
          {
@@ -94,6 +92,16 @@
 
           :add-instance-values (fn [& map-args] 
                                  (merge this (apply hash-map map-args)))
+
+          :move-up (fn []
+                     (let [symbol-above (method-holder-symbol-above (:holder-name this))
+                           holder-name (find-containing-holder-symbol symbol-above
+                                                                      (:name this))]
+                       (if holder-name
+                         (assoc this :holder-name holder-name)
+                         (throw (Error. (str "No superclass method `" (:name this)
+                                             "` above `" (:holder-name this)
+                                             "`."))))))
           }
          {})
 
@@ -113,16 +121,6 @@
                                      :method-missing
                                      (vector name args))))))
 
-(def fresh-active-message
-  (fn [target name args]
-    (let [holder-name (find-containing-holder-symbol 
-                       (:__left_symbol__ target)
-                       name)]
-      (if holder-name
-        {:name name, :holder-name holder-name, :args args, :target target}
-        (fresh-active-message target
-                              :method-missing
-                              (vector name args))))))
 (def send-to-Message-new  ;; Supposed to remind you of (send-to Message :new ...)
      (fn [target name args holder-name]
        (let [initializer (get (held-methods 'ActiveMessage) :add-instance-values)]
@@ -146,7 +144,4 @@
                (fresh-active-message target
                                      :method-missing
                                      (vector name args))))))
-
-
-
 
