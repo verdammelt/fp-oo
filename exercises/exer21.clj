@@ -96,3 +96,57 @@
                                  (merge this (apply hash-map map-args)))
           }
          {})
+
+(def fresh-active-message
+     (fn [target name args]
+       (let [holder-name (find-containing-holder-symbol (:__left_symbol__ target)
+                                                        name)]
+             (if holder-name
+               (binding [this (basic-object 'ActiveMessage)]
+                 ((:add-instance-values ActiveMessage) 
+                  [:name name, 
+                   :holder-name holder-name, 
+                   :args args, 
+                   :target target])
+                 )
+               (fresh-active-message target
+                                     :method-missing
+                                     (vector name args))))))
+
+(def fresh-active-message
+  (fn [target name args]
+    (let [holder-name (find-containing-holder-symbol 
+                       (:__left_symbol__ target)
+                       name)]
+      (if holder-name
+        {:name name, :holder-name holder-name, :args args, :target target}
+        (fresh-active-message target
+                              :method-missing
+                              (vector name args))))))
+(def send-to-Message-new  ;; Supposed to remind you of (send-to Message :new ...)
+     (fn [target name args holder-name]
+       (let [initializer (get (held-methods 'ActiveMessage) :add-instance-values)]
+         (binding [this (basic-object 'ActiveMessage)]
+           (initializer :name name
+                        :holder-name holder-name
+                        :args args
+                        :target target)))))
+
+(def fresh-active-message
+     (fn [target name args]
+       "Construct the message corresponding to the
+      attempt to send the particular `name` to the
+      `target` with the given `args`. If there is no
+      matching method, the message becomes one that
+      sends `:method-missing` to the target."
+       (let [holder-name (find-containing-holder-symbol (:__left_symbol__ target)
+                                                        name)]
+             (if holder-name
+               (send-to-Message-new target name args holder-name)
+               (fresh-active-message target
+                                     :method-missing
+                                     (vector name args))))))
+
+
+
+
